@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>認知症デジタル検査プラットフォーム - デモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #1a6b8a;
+    --primary-light: #2490b5;
+    --primary-dark: #0f4a62;
+    --accent: #00c9a0;
+    --accent2: #f0a500;
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #f7fafa;
+    --text: #1a2733;
+    --text-muted: #6b8090;
+    --border: #d8e6ee;
+    --shadow: 0 2px 16px rgba(26,107,138,0.10);
+  }
+
+  body {
+    background: #c8d8e8;
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* iPad Frame */
+  .ipad-frame {
+    width: 860px;
+    background: #1c1c1e;
+    border-radius: 44px;
+    padding: 22px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.45), 0 0 0 2px #3a3a3c, inset 0 0 0 1px rgba(255,255,255,0.08);
+    position: relative;
+  }
+
+  .ipad-frame::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 6px;
+    background: #2a2a2c;
+    border-radius: 3px;
+  }
+
+  .ipad-screen {
+    background: var(--bg);
+    border-radius: 28px;
+    overflow: hidden;
+    height: 620px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status Bar */
+  .status-bar {
+    background: var(--primary-dark);
+    padding: 8px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.02em;
+  }
+
+  .status-time { font-weight: 600; font-size: 14px; }
+  .status-icons { display: flex; gap: 8px; align-items: center; }
+  .battery { width: 22px; height: 11px; border: 1.5px solid rgba(255,255,255,0.6); border-radius: 3px; position: relative; display: flex; align-items: center; padding: 1.5px; }
+  .battery::after { content: ''; position: absolute; right: -5px; top: 50%; transform: translateY(-50%); width: 3px; height: 5px; background: rgba(255,255,255,0.5); border-radius: 0 1px 1px 0; }
+  .battery-fill { background: #4cd964; border-radius: 1.5px; height: 100%; width: 75%; }
+
+  /* App Header */
+  .app-header {
+    background: var(--primary-dark);
+    padding: 12px 28px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .app-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-icon svg { width: 20px; height: 20px; }
+
+  .app-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+  .app-subtitle {
+    font-size: 10px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 300;
+    letter-spacing: 0.06em;
+  }
+
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .badge-user {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .badge-user::before { content: ''; width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
+
+  /* Tab Nav */
+  .tab-nav {
+    background: var(--primary);
+    display: flex;
+    padding: 0 20px;
+    gap: 2px;
+  }
+  .tab {
+    padding: 10px 18px;
+    color: rgba(255,255,255,0.55);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .tab.active {
+    color: white;
+    border-bottom-color: var(--accent);
+    background: rgba(255,255,255,0.06);
+    border-radius: 6px 6px 0 0;
+  }
+
+  /* Main Content */
+  .main-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== HOME VIEW ===== */
+  .view-home {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 20px;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  /* Exam Grid */
+  .exam-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .exam-card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 1.5px solid transparent;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .exam-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .exam-card:nth-child(1)::before { background: linear-gradient(90deg, #2490b5, #00c9a0); }
+  .exam-card:nth-child(2)::before { background: linear-gradient(90deg, #f0a500, #f06a00); }
+  .exam-card:nth-child(3)::before { background: linear-gradient(90deg, #7c4dff, #b44dff); }
+  .exam-card:nth-child(4)::before { background: linear-gradient(90deg, #00c9a0, #00a878); }
+
+  .exam-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(26,107,138,0.15); }
+
+  .exam-genre {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .exam-card:nth-child(1) .exam-genre { color: #2490b5; }
+  .exam-card:nth-child(2) .exam-genre { color: #f0a500; }
+  .exam-card:nth-child(3) .exam-genre { color: #7c4dff; }
+  .exam-card:nth-child(4) .exam-genre { color: #00a878; }
+
+  .exam-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+
+  .exam-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .exam-count {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .exam-count span {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-left: 2px;
+  }
+
+  .exam-trend {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+  .trend-up { background: #e6f9f4; color: #00a878; }
+  .trend-neutral { background: #f0f4f8; color: var(--text-muted); }
+
+  .start-btn {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 7px;
+    border: none;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    color: white;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  .exam-card:nth-child(1) .start-btn { background: #2490b5; }
+  .exam-card:nth-child(2) .start-btn { background: #f0a500; }
+  .exam-card:nth-child(3) .start-btn { background: #7c4dff; }
+  .exam-card:nth-child(4) .start-btn { background: #00a878; }
+
+  /* Dashboard Row */
+  .dashboard-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .dash-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .dash-card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Mini Bar Chart */
+  .mini-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 50px;
+  }
+
+  .mini-bar-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
+  }
+
+  .mini-bar {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.3s;
+  }
+
+  .mini-bar-label {
+    font-size: 8px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* Donut */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .donut {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+  }
+
+  .donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Score Distribution */
+  .score-list { display: flex; flex-direction: column; gap: 6px; }
+  .score-row { display: flex; align-items: center; gap: 8px; }
+  .score-label { font-size: 9px; color: var(--text-muted); width: 60px; flex-shrink: 0; }
+  .score-bar-bg { flex: 1; height: 6px; background: #e8f0f4; border-radius: 3px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 3px; }
+  .score-val { font-size: 9px; font-weight: 600; color: var(--text); width: 20px; text-align: right; }
+
+  /* Recent Results */
+  .recent-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .recent-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .recent-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .view-all {
+    font-size: 10px;
+    color: var(--primary-light);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .result-table { width: 100%; border-collapse: collapse; }
+  .result-table th {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 3px 8px;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-table td {
+    font-size: 10px;
+    color: var(--text);
+    padding: 6px 8px;
+    border-bottom: 1px solid #f0f4f8;
+  }
+  .result-table tr:last-child td { border-bottom: none; }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .tag-normal { background: #e6f9f4; color: #00a878; }
+  .tag-mci { background: #fff3e0; color: #f0a500; }
+  .tag-risk { background: #fce8e8; color: #e53935; }
+  .tag-blue { background: #e3f2fd; color: #2490b5; }
+
+</style>
+</head>
+<body>
+
+<div class="ipad-frame">
+  <div class="ipad-screen">
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <span style="font-size:12px; color:rgba(255,255,255,0.7); letter-spacing:0.05em;">山田クリニック</span>
+      <div class="status-icons">
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+          <rect x="0" y="6" width="3" height="6" fill="white" fill-opacity="0.9" rx="1"/>
+          <rect x="4.5" y="4" width="3" height="8" fill="white" fill-opacity="0.9" rx="1"/>
+          <rect x="9" y="2" width="3" height="10" fill="white" fill-opacity="0.9" rx="1"/>
+          <rect x="13.5" y="0" width="2.5" height="12" fill="white" fill-opacity="0.4" rx="1"/>
+        </svg>
+        <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
+          <path d="M7 2 C3.5 2 0.5 4.5 0 8" stroke="white" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <path d="M7 4 C4.5 4 2.5 5.8 2 8" stroke="white" stroke-opacity="0.75" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <path d="M7 6 C5.5 6 4.2 7 4 8" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <circle cx="7" cy="10" r="1.2" fill="white"/>
+        </svg>
+        <div class="battery"><div class="battery-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- App Header -->
+    <div class="app-header">
+      <div class="app-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 2C6.686 2 4 4.686 4 8c0 2.5 1.5 4.67 3.67 5.67L7 16h6l-.67-2.33C14.5 12.67 16 10.5 16 8c0-3.314-2.686-6-6-6z" fill="white" fill-opacity="0.9"/>
+            <path d="M8 16h4v1.5a1 1 0 01-1 1H9a1 1 0 01-1-1V16z" fill="white" fill-opacity="0.7"/>
+            <circle cx="10" cy="8" r="2.5" fill="#0f4a62" fill-opacity="0.5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="app-title">CogniScan</div>
+          <div class="app-subtitle">認知症デジタル検査プラットフォーム</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="badge-user">山田 太郎 Dr.</div>
+      </div>
+    </div>
+
+    <!-- Tab Nav -->
+    <div class="tab-nav">
+      <div class="tab active">🏠 ホーム</div>
+      <div class="tab">📋 検査実施</div>
+      <div class="tab">📊 管理ダッシュボード</div>
+      <div class="tab">👤 患者管理</div>
+      <div class="tab">📁 レポート</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="view-home">
+
+        <!-- Exam Cards -->
+        <div>
+          <div class="section-label">検査メニュー</div>
+          <div class="exam-grid">
+
+            <div class="exam-card">
+              <div class="exam-genre">簡易問診</div>
+              <div class="exam-name">メルポ<br>WEB問診</div>
+              <div class="exam-meta">
+                <div class="exam-count">42<span>回/月</span></div>
+                <div class="exam-trend trend-up">↑ 12%</div>
+              </div>
+              <button class="start-btn">検査開始 →</button>
+            </div>
+
+            <div class="exam-card">
+              <div class="exam-genre">長谷川式</div>
+              <div class="exam-name">ExaMD</div>
+              <div class="exam-meta">
+                <div class="exam-count">31<span>回/月</span></div>
+                <div class="exam-trend trend-up">↑ 8%</div>
+              </div>
+              <button class="start-btn">検査開始 →</button>
+            </div>
+
+            <div class="exam-card">
+              <div class="exam-genre">MMSE</div>
+              <div class="exam-name">ミレボ</div>
+              <div class="exam-meta">
+                <div class="exam-count">18<span>回/月</span></div>
+                <div class="exam-trend trend-neutral">→ 0%</div>
+              </div>
+              <button class="start-btn">検査開始 →</button>
+            </div>
+
+            <div class="exam-card">
+              <div class="exam-genre">MoCA-J</div>
+              <div class="exam-name">MoCA-Solo</div>
+              <div class="exam-meta">
+                <div class="exam-count">24<span>回/月</span></div>
+                <div class="exam-trend trend-up">↑ 5%</div>
+              </div>
+              <button class="start-btn">検査開始 →</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Dashboard Row -->
+        <div>
+          <div class="section-label">今月の概況</div>
+          <div class="dashboard-row">
+
+            <!-- Bar Chart: 月別利用回数 -->
+            <div class="dash-card">
+              <div class="dash-card-title">
+                <div class="dot" style="background:#2490b5"></div>
+                月別検査回数
+              </div>
+              <div class="mini-bars">
+                <div class="mini-bar-group">
+                  <div class="mini-bar" style="height:28px;background:#e8f4fa;"></div>
+                  <div class="mini-bar-label">9月</div>
+                </div>
+                <div class="mini-bar-group">
+                  <div class="mini-bar" style="height:36px;background:#c0dff0;"></div>
+                  <div class="mini-bar-label">10月</div>
+                </div>
+                <div class="mini-bar-group">
+                  <div class="mini-bar" style="height:32px;background:#c0dff0;"></div>
+                  <div class="mini-bar-label">11月</div>
+                </div>
+                <div class="mini-bar-group">
+                  <div class="mini-bar" style="height:44px;background:#92c8e8;"></div>
+                  <div class="mini-bar-label">12月</div>
+                </div>
+                <div class="mini-bar-group">
+                  <div class="mini-bar" style="height:40px;background:#92c8e8;"></div>
+                  <div class="mini-bar-label">1月</div>
+                </div>
+                <div class="mini-bar-group">
+                  <div class="mini-bar" style="height:50px;background:#2490b5;"></div>
+                  <div class="mini-bar-label">2月</div>
+                </div>
+              </div>
+              <div style="text-align:center; margin-top:4px;">
+                <span style="font-size:18px; font-weight:700; color:var(--text);">115</span>
+                <span style="font-size:9px; color:var(--text-muted); margin-left:2px;">回 (今月)</span>
+              </div>
+            </div>
+
+            <!-- Donut: 性別比率 -->
+            <div class="dash-card">
+              <div class="dash-card-title">
+                <div class="dot" style="background:#7c4dff"></div>
+                性別・年代分布
+              </div>
+              <div class="donut-wrap">
+                <svg class="donut" viewBox="0 0 60 60">
+                  <circle cx="30" cy="30" r="22" fill="none" stroke="#e8f0f4" stroke-width="10"/>
+                  <!-- Female 58% -->
+                  <circle cx="30" cy="30" r="22" fill="none" stroke="#f48fb1" stroke-width="10"
+                    stroke-dasharray="80 58" stroke-dashoffset="0" transform="rotate(-90 30 30)"/>
+                  <!-- Male 42% -->
+                  <circle cx="30" cy="30" r="22" fill="none" stroke="#90caf9" stroke-width="10"
+                    stroke-dasharray="58 80" stroke-dashoffset="-80" transform="rotate(-90 30 30)"/>
+                  <text x="30" y="33" text-anchor="middle" font-size="8" font-weight="700" fill="#1a2733">115名</text>
+                </svg>
+                <div>
+                  <div class="donut-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:#f48fb1"></div>女性 58%</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#90caf9"></div>男性 42%</div>
+                  </div>
+                  <div style="margin-top:8px; font-size:9px; color:var(--text-muted); line-height:1.6;">
+                    平均年齢: <strong style="color:var(--text)">74.2歳</strong><br>
+                    70代: <strong style="color:var(--text)">48%</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Score Distribution -->
+            <div class="dash-card">
+              <div class="dash-card-title">
+                <div class="dot" style="background:#00a878"></div>
+                検査結果分布 (今月)
+              </div>
+              <div class="score-list">
+                <div class="score-row">
+                  <div class="score-label">正常範囲</div>
+                  <div class="score-bar-bg"><div class="score-bar-fill" style="width:52%; background:#00a878;"></div></div>
+                  <div class="score-val">52%</div>
+                </div>
+                <div class="score-row">
+                  <div class="score-label">MCI疑い</div>
+                  <div class="score-bar-bg"><div class="score-bar-fill" style="width:31%; background:#f0a500;"></div></div>
+                  <div class="score-val">31%</div>
+                </div>
+                <div class="score-row">
+                  <div class="score-label">認知症疑い</div>
+                  <div class="score-bar-bg"><div class="score-bar-fill" style="width:17%; background:#e53935;"></div></div>
+                  <div class="score-val">17%</div>
+                </div>
+              </div>
+              <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border); display:flex; gap:6px;">
+                <div style="flex:1; text-align:center;">
+                  <div style="font-size:16px; font-weight:700; color:#00a878;">60</div>
+                  <div style="font-size:8px; color:var(--text-muted);">正常</div>
+                </div>
+                <div style="flex:1; text-align:center;">
+                  <div style="font-size:16px; font-weight:700; color:#f0a500;">36</div>
+                  <div style="font-size:8px; color:var(--text-muted);">MCI</div>
+                </div>
+                <div style="flex:1; text-align:center;">
+                  <div style="font-size:16px; font-weight:700; color:#e53935;">19</div>
+                  <div style="font-size:8px; color:var(--text-muted);">認知症</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Recent Results Table -->
+        <div class="recent-card">
+          <div class="recent-header">
+            <div class="recent-title">直近の検査結果</div>
+            <div class="view-all">すべて表示 →</div>
+          </div>
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th>患者ID</th>
+                <th>年齢/性別</th>
+                <th>検査種別</th>
+                <th>使用サービス</th>
+                <th>スコア</th>
+                <th>判定</th>
+                <th>実施日</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>#P-1024</strong></td>
+                <td>78歳 / 女</td>
+                <td><span class="tag tag-blue">長谷川式</span></td>
+                <td>ExaMD</td>
+                <td><strong>24 / 30</strong></td>
+                <td><span class="tag tag-mci">MCI疑い</span></td>
+                <td>2025/02/26</td>
+              </tr>
+              <tr>
+                <td><strong>#P-1023</strong></td>
+                <td>71歳 / 男</td>
+                <td><span class="tag tag-blue">MoCA-J</span></td>
+                <td>MoCA-Solo</td>
+                <td><strong>27 / 30</strong></td>
+                <td><span class="tag tag-normal">正常</span></td>
+                <td>2025/02/26</td>
+              </tr>
+              <tr>
+                <td><strong>#P-1022</strong></td>
+                <td>83歳 / 女</td>
+                <td><span class="tag tag-blue">MMSE</span></td>
+                <td>ミレボ</td>
+                <td><strong>17 / 30</strong></td>
+                <td><span class="tag tag-risk">認知症疑い</span></td>
+                <td>2025/02/25</td>
+              </tr>
+              <tr>
+                <td><strong>#P-1021</strong></td>
+                <td>66歳 / 男</td>
+                <td><span class="tag tag-blue">簡易問診</span></td>
+                <td>メルポWEB問診</td>
+                <td>—</td>
+                <td><span class="tag tag-normal">正常</span></td>
+                <td>2025/02/25</td>
+              </tr>
+              <tr>
+                <td><strong>#P-1020</strong></td>
+                <td>75歳 / 女</td>
+                <td><span class="tag tag-blue">長谷川式</span></td>
+                <td>ExaMD</td>
+                <td><strong>20 / 30</strong></td>
+                <td><span class="tag tag-risk">認知症疑い</span></td>
+                <td>2025/02/24</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
